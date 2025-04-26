@@ -15,10 +15,13 @@ import {
   YAxis,
 } from 'recharts';
 import {Button} from '@/components/ui/button';
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from '@/components/ui/dialog';
-import {Input} from '@/components/ui/input';
-import {Label} from '@/components/ui/label';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {cn} from '@/lib/utils';
+import {format, parseISO} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
+import {Calendar} from '@/components/ui/calendar';
+import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
+import {Transaction} from "@/data/mock";
+import {Edit, Trash2} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -26,16 +29,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  TableCaption,
 } from '@/components/ui/table';
-import {cn} from '@/lib/utils';
-import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from '@/components/ui/alert-dialog';
-import {format, parseISO} from 'date-fns';
-import {ptBR} from 'date-fns/locale';
-import {Calendar} from '@/components/ui/calendar';
-import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
-import {Transaction} from "@/data/mock";
-import {Edit, Trash2} from "lucide-react";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from "@/components/ui/alert-dialog";
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
 
 // Function to generate distinct colors for pie charts
 const generateColors = (count: number, baseColor: string = 'hsl(139, 78%, 32%)') => {
@@ -63,6 +62,17 @@ const Dashboard = ({mockData}: DashboardProps) => {
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string | null>(null);
   const [dateGranularity, setDateGranularity] = useState('month'); // Default granularity
+
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
+  //Edit form
+  const [editDate, setEditDate] = useState<Date | undefined>(new Date());
+  const [editCategory, setEditCategory] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editAmount, setEditAmount] = useState('');
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
 
   // Format the date range for filtering
   const formattedDateFrom = date?.from ? format(date.from, 'yyyy-MM-dd') : '';
@@ -153,9 +163,61 @@ const Dashboard = ({mockData}: DashboardProps) => {
   const totalSaidas = filteredData.filter(item => item.type === 'Saída').reduce((sum, item) => sum + item.amount, 0);
   const saldo = totalEntradas - totalSaidas;
 
-  const handleDelete = () => {
-    alert('Confirmar exclusão?');
-    // Lógica para excluir item
+  const handleDelete = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setDeleteConfirmationOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedTransaction) {
+      setMockData(mockData.filter(item =>
+        !(item.date === selectedTransaction.date && item.description === selectedTransaction.description)
+      ));
+      setDeleteConfirmationOpen(false);
+      setSelectedTransaction(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmationOpen(false);
+    setSelectedTransaction(null);
+  };
+
+  const handleEdit = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setEditDate(parseISO(transaction.date));
+    setEditCategory(transaction.category);
+    setEditDescription(transaction.description);
+    setEditAmount(transaction.amount.toString());
+    setEditModalOpen(true);
+  };
+
+  const handleConfirmEdit = () => {
+    if (selectedTransaction && editDate && editCategory && editDescription && editAmount) {
+      const updatedTransaction: Transaction = {
+        date: format(editDate, 'yyyy-MM-dd'),
+        category: editCategory,
+        type: selectedTransaction.type,
+        description: editDescription,
+        amount: parseFloat(editAmount),
+      };
+
+      setMockData(mockData.map(item =>
+        item.date === selectedTransaction.date && item.description === selectedTransaction.description ? updatedTransaction : item
+      ));
+
+      setEditDate(new Date());
+      setEditCategory('');
+      setEditDescription('');
+      setEditAmount('');
+      setEditModalOpen(false);
+      setSelectedTransaction(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditModalOpen(false);
+    setSelectedTransaction(null);
   };
 
   const categories = [...new Set(mockData.map(item => item.category))];
@@ -175,81 +237,91 @@ const Dashboard = ({mockData}: DashboardProps) => {
     <div className="container mx-auto mt-8">
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant={'outline'}
-              className={cn(
-                'w-[200px] justify-start text-left font-normal',
-                !date?.from && 'text-muted-foreground'
-              )}
-            >
-              {date?.from && date?.to ? (
-                format(date.from, 'dd/MM/yyyy', {locale: ptBR}) + ' - ' + format(date.to, 'dd/MM/yyyy', {locale: ptBR})
-              ) : (
-                <span>Selecione o intervalo de datas</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={setDate}
-              disabled={false}
-            />
-          </PopoverContent>
-        </Popover>
+      <div className="mb-4 flex flex-wrap items-center gap-2 md:flex-row md:space-x-4">
+        <div className="w-full md:w-auto">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={'outline'}
+                className={cn(
+                  'w-[200px] justify-start text-left font-normal',
+                  !date?.from && 'text-muted-foreground'
+                )}
+              >
+                {date?.from && date?.to ? (
+                  format(date.from, 'dd/MM/yyyy', {locale: ptBR}) + ' - ' + format(date.to, 'dd/MM/yyyy', {locale: ptBR})
+                ) : (
+                  <span>Selecione o intervalo de datas</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={setDate}
+                disabled={false}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
 
-        <Select onValueChange={(value) => setFilterCategory(value === 'null' ? null : value)} className="max-w-[180px] w-full">
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Filtrar por categoria"/>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={null}>Todas as Categorias</SelectItem>
-            {categories.map(category => (
-              <SelectItem key={category} value={category}>{category}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-full md:w-auto">
+          <Select onValueChange={(value) => setFilterCategory(value === 'null' ? null : value)} className="max-w-[180px] w-full">
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Filtrar por categoria"/>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={null}>Todas as Categorias</SelectItem>
+              {categories.map(category => (
+                <SelectItem key={category} value={category}>{category}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Select onValueChange={(value) => setFilterType(value === 'null' ? null : value)} className="max-w-[180px] w-full">
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Filtrar por tipo"/>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={null}>Todos os Tipos</SelectItem>
-            {types.map(type => (
-              <SelectItem key={type} value={type}>{type}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-full md:w-auto">
+          <Select onValueChange={(value) => setFilterType(value === 'null' ? null : value)} className="max-w-[180px] w-full">
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Filtrar por tipo"/>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={null}>Todos os Tipos</SelectItem>
+              {types.map(type => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Select onValueChange={setDateGranularity} className="max-w-[180px] w-full">
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Granularidade da Data"/>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="day">Dia</SelectItem>
-            <SelectItem value="week">Semana</SelectItem>
-            <SelectItem value="month">Mês</SelectItem>
-            <SelectItem value="year">Ano</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="w-full md:w-auto">
+          <Select onValueChange={setDateGranularity} className="max-w-[180px] w-full">
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Granularidade da Data"/>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="day">Dia</SelectItem>
+              <SelectItem value="week">Semana</SelectItem>
+              <SelectItem value="month">Mês</SelectItem>
+              <SelectItem value="year">Ano</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Button variant="outline" onClick={() => {
-          setDate({
-            from: new Date(new Date().getFullYear(), 0, 1), // Beginning of the year
-            to: new Date(), // Today
-          });
-          setFilterCategory(null);
-          setFilterType(null);
-          setDateGranularity('month');
-        }} className="w-full max-w-[180px]">
-          Limpar Filtros
-        </Button>
+        <div className="w-full md:w-auto">
+          <Button variant="outline" onClick={() => {
+            setDate({
+              from: new Date(new Date().getFullYear(), 0, 1), // Beginning of the year
+              to: new Date(), // Today
+            });
+            setFilterCategory(null);
+            setFilterType(null);
+            setDateGranularity('month');
+          }} className="w-full max-w-[180px]">
+            Limpar Filtros
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -372,7 +444,7 @@ const Dashboard = ({mockData}: DashboardProps) => {
           </ResponsiveContainer>
         </div>
       </div>
-       <div className="container mx-auto mt-8 overflow-x-auto">
+      <div className="container mx-auto mt-8 overflow-x-auto">
         <h2 className="text-2xl font-bold mb-4">Transações Salvas</h2>
         <Table>
           <TableHeader>
@@ -394,7 +466,7 @@ const Dashboard = ({mockData}: DashboardProps) => {
                 <TableCell>{item.description}</TableCell>
                 <TableCell className="text-right">R$ {item.amount.toFixed(2)}</TableCell>
                 <TableCell className="text-center">
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                  <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                     <Edit className="h-4 w-4"/>
                   </Button>
                   <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
@@ -406,6 +478,96 @@ const Dashboard = ({mockData}: DashboardProps) => {
           </TableBody>
         </Table>
       </div>
+
+      {/*Delete Confirmation Modal*/}
+      <AlertDialog open={deleteConfirmationOpen} onOpenChange={setDeleteConfirmationOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Remoção</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover esta transação?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDelete}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/*Edit Modal*/}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Transação</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editDate" className="text-right">
+                Data
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={'outline'}
+                    className={cn(
+                      'w-[200px] justify-start text-left font-normal',
+                      !editDate && 'text-muted-foreground'
+                    )}
+                  >
+                    {editDate ? format(editDate, 'dd/MM/yyyy', {locale: ptBR}) : <span>Selecione a data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    defaultMonth={editDate}
+                    selected={editDate}
+                    onSelect={setEditDate}
+                    disabled={false}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editCategory" className="text-right">
+                Categoria
+              </Label>
+              <Input
+                id="editCategory"
+                className="col-span-3"
+                value={editCategory}
+                onChange={(e) => setEditCategory(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editDescription" className="text-right">
+                Descrição
+              </Label>
+              <Input
+                id="editDescription"
+                className="col-span-3"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editAmount" className="text-right">
+                Valor
+              </Label>
+              <Input
+                id="editAmount"
+                type="number"
+                className="col-span-3"
+                value={editAmount}
+                onChange={(e) => setEditAmount(e.target.value)}
+              />
+            </div>
+          </div>
+          <Button onClick={handleConfirmEdit}>Salvar</Button>
+          <Button type="button" variant="secondary" onClick={handleCancelEdit}>Cancelar</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

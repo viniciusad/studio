@@ -2,7 +2,9 @@
 
 import {useState} from 'react';
 import {Button} from '@/components/ui/button';
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
+import {Sheet, SheetContent, SheetTrigger} from "@/components/ui/sheet";
+import {Menu} from "lucide-react";
 
 const Navbar = ({
   setEntriesOpen,
@@ -12,6 +14,7 @@ const Navbar = ({
   setCadastrosOpen
 }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -28,7 +31,54 @@ const Navbar = ({
   return (
     <nav className="bg-primary text-primary-foreground p-4 sticky top-0 z-10">
       <div className="container mx-auto flex justify-between items-center flex-wrap">
-        <div className="flex justify-start items-center space-x-4 mb-2 md:mb-0">
+        {/* Mobile Menu Button */}
+        <div className="md:hidden">
+          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                <Menu className="h-5 w-5"/>
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64">
+              <div className="grid gap-4 py-4">
+                <Button variant="ghost" className="hover:underline justify-start" onClick={() => {
+                  setEntriesOpen(true);
+                  setIsMenuOpen(false);
+                }}>
+                  Entradas
+                </Button>
+                <Button variant="ghost" className="hover:underline justify-start" onClick={() => {
+                  setExitsOpen(true);
+                  setIsMenuOpen(false);
+                }}>
+                  Saídas
+                </Button>
+                <Button variant="ghost" className="hover:underline justify-start" onClick={() => {
+                  setPlanningOpen(true);
+                  setIsMenuOpen(false);
+                }}>
+                  Planejamento
+                </Button>
+                <Button variant="ghost" className="hover:underline justify-start" onClick={() => {
+                  setExtrasOpen(true);
+                  setIsMenuOpen(false);
+                }}>
+                  Extras
+                </Button>
+                <Button variant="ghost" className="hover:underline justify-start" onClick={() => {
+                  setCadastrosOpen(true);
+                  setIsMenuOpen(false);
+                }}>
+                  Cadastros
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Desktop Menu */}
+        <div className="hidden md:flex justify-start items-center space-x-4 mb-2 md:mb-0">
           <Button variant="ghost" className="font-bold text-lg hover:underline">
             Dashboard
           </Button>
