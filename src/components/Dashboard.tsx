@@ -563,7 +563,7 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
       <Accordion type="single" collapsible>
         <AccordionItem value="all-transactions">
           <AccordionTrigger>
-            <h2 className="text-2xl font-bold mb-4">Todas as Transações (Paginado)</h2>
+            <h2 className="text-2xl font-bold mb-4">Todas as Transações</h2>
           </AccordionTrigger>
           <AccordionContent>
             <div className="container mx-auto mt-8 overflow-x-auto">
