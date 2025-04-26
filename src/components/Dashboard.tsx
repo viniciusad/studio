@@ -167,6 +167,8 @@ const Dashboard = ({mockData}: DashboardProps) => {
   const entradaColor = '#388E3C'; // Mais escuro que o verde padrão
   const saidaColor = '#D32F2F'; // Mais escuro que o vermelho padrão
 
+  const saldoColor = saldo > 0 ? 'bg-green-100' : saldo < 0 ? 'bg-red-100' : 'bg-red-100';
+
   return (
     <div className="container mx-auto mt-8">
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
@@ -249,15 +251,15 @@ const Dashboard = ({mockData}: DashboardProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        <div className="bg-secondary rounded-lg p-4">
+        <div className={cn("rounded-lg p-4", saldoColor)}>
           <h2 className="font-bold mb-2">Saldo</h2>
           <p>R$ {saldo.toFixed(2)}</p>
         </div>
-        <div className="bg-secondary rounded-lg p-4">
+        <div className="rounded-lg p-4 bg-green-100">
           <h2 className="font-bold mb-2">Total de Entradas</h2>
           <p>R$ {totalEntradas.toFixed(2)}</p>
         </div>
-        <div className="bg-secondary rounded-lg p-4">
+        <div className="rounded-lg p-4 bg-red-100">
           <h2 className="font-bold mb-2">Total de Saídas</h2>
           <p>R$ {totalSaidas.toFixed(2)}</p>
         </div>
