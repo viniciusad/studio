@@ -38,6 +38,7 @@ import {Label} from "@/components/ui/label";
 import {mockData as initialMockData} from "@/data/mock";
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import {ChevronDown} from "lucide-react";
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
 
 // Function to generate distinct colors for pie charts
 const generateColors = (count: number, baseColor: string = 'hsl(139, 78%, 32%)') => {
@@ -559,59 +560,58 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
         </Table>
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline">
-            Todas as Transações <ChevronDown className="ml-2 h-4 w-4"/>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-auto">
-          <div className="container mx-auto mt-8 overflow-x-auto">
-            <h2 className="text-2xl font-bold mb-4">Todas as Transações (Paginado)</h2>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[150px]" onClick={() => handleSort('date')}>Data</TableHead>
-                  <TableHead onClick={() => handleSort('category')}>Categoria</TableHead>
-                  <TableHead onClick={() => handleSort('type')}>Tipo</TableHead>
-                  <TableHead onClick={() => handleSort('description')}>Descrição</TableHead>
-                  <TableHead className="text-right" onClick={() => handleSort('amount')}>Valor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedData.map(item => (
-                  <TableRow key={item.date + item.description}>
-                    <TableCell className="font-medium">{format(parseISO(item.date), 'dd/MM/yyyy', {locale: ptBR})}</TableCell>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell>{item.type}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell className="text-right">R$ {item.amount.toFixed(2)}</TableCell>
+      <Accordion type="single" collapsible>
+        <AccordionItem value="all-transactions">
+          <AccordionTrigger>
+            Todas as Transações (Paginado)
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="container mx-auto mt-8 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[150px]" onClick={() => handleSort('date')}>Data</TableHead>
+                    <TableHead onClick={() => handleSort('category')}>Categoria</TableHead>
+                    <TableHead onClick={() => handleSort('type')}>Tipo</TableHead>
+                    <TableHead onClick={() => handleSort('description')}>Descrição</TableHead>
+                    <TableHead className="text-right" onClick={() => handleSort('amount')}>Valor</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="flex justify-between items-center mt-4">
-              <Button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                variant="outline"
-                size="sm"
-              >
-                Anterior
-              </Button>
-              <span>Página {currentPage} de {totalPages}</span>
-              <Button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                variant="outline"
-                size="sm"
-              >
-                Próximo
-              </Button>
+                </TableHeader>
+                <TableBody>
+                  {paginatedData.map(item => (
+                    <TableRow key={item.date + item.description}>
+                      <TableCell className="font-medium">{format(parseISO(item.date), 'dd/MM/yyyy', {locale: ptBR})}</TableCell>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell>{item.type}</TableCell>
+                      <TableCell>{item.description}</TableCell>
+                      <TableCell className="text-right">R$ {item.amount.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="flex justify-between items-center mt-4">
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                  size="sm"
+                >
+                  Anterior
+                </Button>
+                <span>Página {currentPage} de {totalPages}</span>
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                  size="sm"
+                >
+                  Próximo
+                </Button>
+              </div>
             </div>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/*Delete Confirmation Modal*/}
       <AlertDialog open={deleteConfirmationOpen} onOpenChange={setDeleteConfirmationOpen}>
