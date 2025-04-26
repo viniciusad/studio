@@ -36,6 +36,8 @@ import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {mockData as initialMockData} from "@/data/mock";
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
+import {ChevronDown} from "lucide-react";
 
 // Function to generate distinct colors for pie charts
 const generateColors = (count: number, baseColor: string = 'hsl(139, 78%, 32%)') => {
@@ -57,7 +59,7 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
 
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string | null>(null);
-  const [dateGranularity, setDateGranularity] = useState('month'); // Default granularity
+  const [dateGranularity, setDateGranularity] = useState('month');
   const [mockData, setMockData] = useState<Transaction[]>(initialData);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
@@ -71,6 +73,10 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [sortColumn, setSortColumn] = useState<keyof Transaction | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Pagination for full data table
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleDateRangeChange = useCallback((from: Date | undefined, to: Date | undefined) => {
     setFromDate(from);
@@ -190,7 +196,6 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
     }
   };
 
-  // Format the date range for filtering
   const formattedDateFrom = fromDate ? format(fromDate, 'yyyy-MM-dd') : '';
   const formattedDateTo = toDate ? format(toDate, 'yyyy-MM-dd') : '';
 
@@ -222,7 +227,6 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
     return 0;
   });
 
-  // Process data for the area chart (Evolução de Entradas e Saídas)
   const areaChartData = filteredData.reduce((acc: any, item) => {
     const date = parseISO(item.date);
     let formattedDate: string;
@@ -261,13 +265,12 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
     }
 
     return acc;
-  }, []).sort((a: any, b: any) => { // Sort by date in ascending order
+  }, []).sort((a: any, b: any) => {
     const dateA = parseISO(`2000-${a.date.substring(0, 2)}-01`);
     const dateB = parseISO(`2000-${b.date.substring(0, 2)}-01`);
     return dateA.getTime() - dateB.getTime();
   });
 
-  // Process data for the pie chart (Distribuição por Categoria)
   const categoryPieChartData = filteredData.reduce((acc: any, item) => {
     const existingCategory = acc.find((entry: any) => entry.name === item.category);
     if (existingCategory) {
@@ -278,7 +281,6 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
     return acc;
   }, []);
 
-  // Process data for the pie chart (Distribuição por Tipo)
   const typePieChartData = filteredData.reduce((acc: any, item) => {
     const existingType = acc.find((entry: any) => entry.name === item.type);
     if (existingType) {
@@ -292,10 +294,15 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
   const categoriesList = [...new Set(initialData.map(item => item.category))];
   const typesList = [...new Set(initialData.map(item => item.type))];
 
-  // Generate colors for category pie chart
   const categoryColors = generateColors(categoryPieChartData.length);
-  // Generate colors for type pie chart
   const typeColors = generateColors(typePieChartData.length);
+
+  // Pagination calculation
+  const totalItems = mockData.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+  const paginatedData = mockData.slice(startIndex, endIndex);
 
   return (
     <div className="container mx-auto mt-8">
@@ -518,7 +525,7 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
 
       {/*Transactions table section*/}
       <div className="container mx-auto mt-8 overflow-x-auto">
-        <h2 className="text-2xl font-bold mb-4">Transações Salvas</h2>
+        <h2 className="text-2xl font-bold mb-4">Transações Filtradas</h2>
         <Table>
           <TableHeader>
             <TableRow>
@@ -551,6 +558,60 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
           </TableBody>
         </Table>
       </div>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline">
+            Todas as Transações <ChevronDown className="ml-2 h-4 w-4"/>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-auto">
+          <div className="container mx-auto mt-8 overflow-x-auto">
+            <h2 className="text-2xl font-bold mb-4">Todas as Transações (Paginado)</h2>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[150px]" onClick={() => handleSort('date')}>Data</TableHead>
+                  <TableHead onClick={() => handleSort('category')}>Categoria</TableHead>
+                  <TableHead onClick={() => handleSort('type')}>Tipo</TableHead>
+                  <TableHead onClick={() => handleSort('description')}>Descrição</TableHead>
+                  <TableHead className="text-right" onClick={() => handleSort('amount')}>Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.map(item => (
+                  <TableRow key={item.date + item.description}>
+                    <TableCell className="font-medium">{format(parseISO(item.date), 'dd/MM/yyyy', {locale: ptBR})}</TableCell>
+                    <TableCell>{item.category}</TableCell>
+                    <TableCell>{item.type}</TableCell>
+                    <TableCell>{item.description}</TableCell>
+                    <TableCell className="text-right">R$ {item.amount.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="flex justify-between items-center mt-4">
+              <Button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                variant="outline"
+                size="sm"
+              >
+                Anterior
+              </Button>
+              <span>Página {currentPage} de {totalPages}</span>
+              <Button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                variant="outline"
+                size="sm"
+              >
+                Próximo
+              </Button>
+            </div>
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/*Delete Confirmation Modal*/}
       <AlertDialog open={deleteConfirmationOpen} onOpenChange={setDeleteConfirmationOpen}>
