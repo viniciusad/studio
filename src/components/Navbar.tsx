@@ -2,6 +2,7 @@
 
 import {useState} from 'react';
 import {Button} from '@/components/ui/button';
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 const Navbar = ({setEntriesOpen, setExitsOpen}) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -51,19 +52,16 @@ const Navbar = ({setEntriesOpen, setExitsOpen}) => {
             onChange={handleImageUpload}
           />
           <label htmlFor="imageUpload">
-            <div className="relative w-10 h-10 rounded-full overflow-hidden cursor-pointer">
+            <Avatar className="w-10 h-10 cursor-pointer">
               {selectedImage ? (
-                <img
+                <AvatarImage
                   src={selectedImage}
                   alt="Uploaded"
-                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-secondary text-secondary-foreground flex items-center justify-center">
-                  +
-                </div>
+                <AvatarFallback>+</AvatarFallback>
               )}
-            </div>
+            </Avatar>
           </label>
         </div>
       </div>
