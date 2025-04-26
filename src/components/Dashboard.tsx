@@ -171,18 +171,18 @@ const mockData = [
 
 const Dashboard = () => {
   const [filterDate, setFilterDate] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
-  const [filterType, setFilterType] = useState('');
+  const [filterCategory, setFilterCategory] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<string | null>(null);
   const [dateGranularity, setDateGranularity] = useState('month'); // Default granularity
 
   const filteredData = mockData.filter(item => {
     if (filterDate && !item.date.includes(filterDate)) {
       return false;
     }
-    if (filterCategory && item.category !== filterCategory) {
+    if (filterCategory && filterCategory !== null && item.category !== filterCategory) {
       return false;
     }
-    if (filterType && item.type !== filterType) {
+    if (filterType && filterType !== null && item.type !== filterType) {
       return false;
     }
     return true;
@@ -264,24 +264,24 @@ const Dashboard = () => {
           onChange={e => setFilterDate(e.target.value)}
           className="w-auto"
         />
-        <Select onValueChange={setFilterCategory}>
+        <Select onValueChange={(value) => setFilterCategory(value === 'null' ? null : value)}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrar por categoria"/>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas as Categorias</SelectItem>
+            <SelectItem value={null}>Todas as Categorias</SelectItem>
             {categories.map(category => (
               <SelectItem key={category} value={category}>{category}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Select onValueChange={setFilterType}>
+        <Select onValueChange={(value) => setFilterType(value === 'null' ? null : value)}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrar por tipo"/>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os Tipos</SelectItem>
+            <SelectItem value={null}>Todos os Tipos</SelectItem>
             {types.map(type => (
               <SelectItem key={type} value={type}>{type}</SelectItem>
             ))}
@@ -302,8 +302,8 @@ const Dashboard = () => {
 
         <Button variant="outline" onClick={() => {
           setFilterDate('');
-          setFilterCategory('');
-          setFilterType('');
+          setFilterCategory(null);
+          setFilterType(null);
           setDateGranularity('month');
         }}>
           Limpar Filtros
