@@ -1,6 +1,6 @@
 'use client';
 
-import {useState} from 'react';
+import {useState, useCallback} from 'react';
 import {
   Area,
   AreaChart,
@@ -35,6 +35,7 @@ import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, A
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
+import {mockData as initialMockData} from "@/data/mock";
 
 // Function to generate distinct colors for pie charts
 const generateColors = (count: number, baseColor: string = 'hsl(139, 78%, 32%)') => {
@@ -50,14 +51,14 @@ interface DashboardProps {
   mockData: Transaction[];
 }
 
-const Dashboard = ({mockData}: DashboardProps) => {
+const Dashboard = ({mockData: initialData}: DashboardProps) => {
   const [fromDate, setFromDate] = useState<Date | undefined>(new Date(new Date().getFullYear(), 0, 1));
   const [toDate, setToDate] = useState<Date | undefined>(new Date());
 
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string | null>(null);
   const [dateGranularity, setDateGranularity] = useState('month'); // Default granularity
-
+  const [mockData, setMockData] = useState<Transaction[]>(initialData);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   //Edit form
@@ -68,12 +69,132 @@ const Dashboard = ({mockData}: DashboardProps) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
 
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+  const [sortColumn, setSortColumn] = useState<keyof Transaction | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const handleDateRangeChange = useCallback((from: Date | undefined, to: Date | undefined) => {
+    setFromDate(from);
+    setToDate(to);
+  }, []);
+
+  const handleCategoryFilterChange = useCallback((value: string | null) => {
+    setFilterCategory(value === 'null' ? null : value);
+  }, []);
+
+  const handleTypeFilterChange = useCallback((value: string | null) => {
+    setFilterType(value === 'null' ? null : value);
+  }, []);
+
+  const handleDateGranularityChange = useCallback((value: string) => {
+    setDateGranularity(value);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setFromDate(new Date(new Date().getFullYear(), 0, 1));
+    setToDate(new Date());
+    setFilterCategory(null);
+    setFilterType(null);
+    setDateGranularity('month');
+  }, []);
+
+  const handleEdit = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setEditDate(parseISO(transaction.date));
+    setEditCategory(transaction.category);
+    setEditDescription(transaction.description);
+    setEditAmount(transaction.amount.toString());
+    setEditModalOpen(true);
+  };
+
+  const handleConfirmEdit = () => {
+    if (selectedTransaction && editDate && editCategory && editDescription && editAmount) {
+      const updatedTransaction: Transaction = {
+        date: format(editDate, 'yyyy-MM-dd'),
+        category: editCategory,
+        type: selectedTransaction.type,
+        description: editDescription,
+        amount: parseFloat(editAmount),
+      };
+
+      setMockData(mockData.map(item =>
+        item.date === selectedTransaction.date && item.description === selectedTransaction.description ? updatedTransaction : item
+      ));
+
+      setEditDate(new Date());
+      setEditCategory('');
+      setEditDescription('');
+      setEditAmount('');
+      setEditModalOpen(false);
+      setSelectedTransaction(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditModalOpen(false);
+    setSelectedTransaction(null);
+  };
+
+  const handleRemove = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setDeleteConfirmationOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedTransaction) {
+      setMockData(mockData.filter(item =>
+        !(item.date === selectedTransaction.date && item.description === selectedTransaction.description)
+      ));
+      setDeleteConfirmationOpen(false);
+      setSelectedTransaction(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmationOpen(false);
+    setSelectedTransaction(null);
+  };
+
+  const categories = [...new Set(initialData.map(item => item.category))];
+  const types = [...new Set(initialData.map(item => item.type))];
+
+  const entradaColor = '#388E3C'; // Mais escuro que o verde padrão
+  const saidaColor = '#D32F2F'; // Mais escuro que o vermelho padrão
+
+  const saldo = mockData.filter(item => {
+    const itemDate = parseISO(item.date);
+    return (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate) &&
+      (!filterCategory || item.category === filterCategory) &&
+      (!filterType || item.type === filterType);
+  }).reduce((acc, item) => item.type === 'Entrada' ? acc + item.amount : acc - item.amount, 0);
+
+  const totalEntradas = mockData.filter(item => {
+    const itemDate = parseISO(item.date);
+    return (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate) && item.type === 'Entrada' &&
+      (!filterCategory || item.category === filterCategory);
+  }).reduce((sum, item) => sum + item.amount, 0);
+
+  const totalSaidas = mockData.filter(item => {
+    const itemDate = parseISO(item.date);
+    return (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate) && item.type === 'Saída' &&
+      (!filterCategory || item.category === filterCategory);
+  }).reduce((sum, item) => sum + item.amount, 0);
+
+  const saldoColor = saldo > 0 ? 'bg-green-100' : saldo < 0 ? 'bg-red-100' : 'bg-red-100';
+
+  const handleSort = (column: keyof Transaction) => {
+    if (column === sortColumn) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
 
   // Format the date range for filtering
   const formattedDateFrom = fromDate ? format(fromDate, 'yyyy-MM-dd') : '';
   const formattedDateTo = toDate ? format(toDate, 'yyyy-MM-dd') : '';
 
-  const filteredData = mockData.filter(item => {
+  const filteredData = [...mockData].filter(item => {
     const itemDate = parseISO(item.date);
     if (fromDate && toDate && (itemDate < fromDate || itemDate > toDate)) {
       return false;
@@ -85,6 +206,20 @@ const Dashboard = ({mockData}: DashboardProps) => {
       return false;
     }
     return true;
+  }).sort((a, b) => {
+    if (sortColumn) {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      } else {
+        return 0;
+      }
+    }
+    return 0;
   });
 
   // Process data for the area chart (Evolução de Entradas e Saídas)
@@ -154,79 +289,13 @@ const Dashboard = ({mockData}: DashboardProps) => {
     return acc;
   }, []);
 
-  const totalEntradas = filteredData.filter(item => item.type === 'Entrada').reduce((sum, item) => sum + item.amount, 0);
-  const totalSaidas = filteredData.filter(item => item.type === 'Saída').reduce((sum, item) => sum + item.amount, 0);
-  const saldo = totalEntradas - totalSaidas;
-
-  const handleDelete = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    setDeleteConfirmationOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (selectedTransaction) {
-      setMockData(mockData.filter(item =>
-        !(item.date === selectedTransaction.date && item.description === selectedTransaction.description)
-      ));
-      setDeleteConfirmationOpen(false);
-      setSelectedTransaction(null);
-    }
-  };
-
-  const handleCancelDelete = () => {
-    setDeleteConfirmationOpen(false);
-    setSelectedTransaction(null);
-  };
-
-  const handleEdit = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    setEditDate(parseISO(transaction.date));
-    setEditCategory(transaction.category);
-    setEditDescription(transaction.description);
-    setEditAmount(transaction.amount.toString());
-    setEditModalOpen(true);
-  };
-
-  const handleConfirmEdit = () => {
-    if (selectedTransaction && editDate && editCategory && editDescription && editAmount) {
-      const updatedTransaction: Transaction = {
-        date: format(editDate, 'yyyy-MM-dd'),
-        category: editCategory,
-        type: selectedTransaction.type,
-        description: editDescription,
-        amount: parseFloat(editAmount),
-      };
-
-      setMockData(mockData.map(item =>
-        item.date === selectedTransaction.date && item.description === selectedTransaction.description ? updatedTransaction : item
-      ));
-
-      setEditDate(new Date());
-      setEditCategory('');
-      setEditDescription('');
-      setEditAmount('');
-      setEditModalOpen(false);
-      setSelectedTransaction(null);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditModalOpen(false);
-    setSelectedTransaction(null);
-  };
-
-  const categories = [...new Set(mockData.map(item => item.category))];
-  const types = [...new Set(mockData.map(item => item.type))];
+  const categoriesList = [...new Set(initialData.map(item => item.category))];
+  const typesList = [...new Set(initialData.map(item => item.type))];
 
   // Generate colors for category pie chart
   const categoryColors = generateColors(categoryPieChartData.length);
   // Generate colors for type pie chart
   const typeColors = generateColors(typePieChartData.length);
-
-  const entradaColor = '#388E3C'; // Mais escuro que o verde padrão
-  const saidaColor = '#D32F2F'; // Mais escuro que o vermelho padrão
-
-  const saldoColor = saldo > 0 ? 'bg-green-100' : saldo < 0 ? 'bg-red-100' : 'bg-red-100';
 
   return (
     <div className="container mx-auto mt-8">
@@ -278,13 +347,13 @@ const Dashboard = ({mockData}: DashboardProps) => {
         </div>
 
         <div className="w-full md:w-auto">
-          <Select onValueChange={(value) => setFilterCategory(value === 'null' ? null : value)} className="max-w-[180px] w-full">
+          <Select onValueChange={handleCategoryFilterChange} className="max-w-[180px] w-full">
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Filtrar por categoria"/>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={null}>Todas as Categorias</SelectItem>
-              {categories.map(category => (
+              {categoriesList.map(category => (
                 <SelectItem key={category} value={category}>{category}</SelectItem>
               ))}
             </SelectContent>
@@ -292,13 +361,13 @@ const Dashboard = ({mockData}: DashboardProps) => {
         </div>
 
         <div className="w-full md:w-auto">
-          <Select onValueChange={(value) => setFilterType(value === 'null' ? null : value)} className="max-w-[180px] w-full">
+          <Select onValueChange={handleTypeFilterChange} className="max-w-[180px] w-full">
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Filtrar por tipo"/>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={null}>Todos os Tipos</SelectItem>
-              {types.map(type => (
+              {typesList.map(type => (
                 <SelectItem key={type} value={type}>{type}</SelectItem>
               ))}
             </SelectContent>
@@ -306,7 +375,7 @@ const Dashboard = ({mockData}: DashboardProps) => {
         </div>
 
         <div className="w-full md:w-auto">
-          <Select onValueChange={setDateGranularity} className="max-w-[180px] w-full">
+          <Select onValueChange={handleDateGranularityChange} className="max-w-[180px] w-full">
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Granularidade da Data"/>
             </SelectTrigger>
@@ -320,13 +389,7 @@ const Dashboard = ({mockData}: DashboardProps) => {
         </div>
 
         <div className="w-full md:w-auto">
-          <Button variant="outline" onClick={() => {
-            setFromDate(new Date(new Date().getFullYear(), 0, 1));
-            setToDate(new Date());
-            setFilterCategory(null);
-            setFilterType(null);
-            setDateGranularity('month');
-          }} className="w-full max-w-[180px]">
+          <Button variant="outline" onClick={handleClearFilters} className="w-full max-w-[180px]">
             Limpar Filtros
           </Button>
         </div>
@@ -452,16 +515,17 @@ const Dashboard = ({mockData}: DashboardProps) => {
           </ResponsiveContainer>
         </div>
       </div>
+
       <div className="container mx-auto mt-8 overflow-x-auto">
         <h2 className="text-2xl font-bold mb-4">Transações Salvas</h2>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[150px]">Data</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="w-[150px]" onClick={() => handleSort('date')}>Data</TableHead>
+              <TableHead onClick={() => handleSort('category')}>Categoria</TableHead>
+              <TableHead onClick={() => handleSort('type')}>Tipo</TableHead>
+              <TableHead onClick={() => handleSort('description')}>Descrição</TableHead>
+              <TableHead className="text-right" onClick={() => handleSort('amount')}>Valor</TableHead>
               <TableHead className="text-center">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -477,7 +541,7 @@ const Dashboard = ({mockData}: DashboardProps) => {
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                     <Edit className="h-4 w-4"/>
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                  <Button variant="ghost" size="icon" onClick={() => handleRemove(item)}>
                     <Trash2 className="h-4 w-4"/>
                   </Button>
                 </TableCell>
