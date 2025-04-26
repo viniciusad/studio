@@ -646,4 +646,3 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
 };
 
 export default Dashboard;
-
