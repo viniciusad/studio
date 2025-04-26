@@ -1,43 +1,129 @@
-# FinPessoal Lite
 
-**FinPessoal Lite** é um sistema de controle financeiro pessoal desenvolvido para melhorar e simplificar a gestão das suas finanças. Com uma interface intuitiva e funcionalidades robustas, você terá o controle total do seu dinheiro na palma da mão. Nosso objetivo é tornar o gerenciamento financeiro mais acessível e eficaz. Este sistema foi projetado com segurança em mente, incluindo autenticação e uma base de dados segura com duplo fator de autenticação, acessível online.
-    
+# 🧭 FinPessoal Lite
 
-## Funcionalidades
-    
-## Recursos
+**FinPessoal Lite** é um sistema de controle financeiro pessoal, projetado para ajudar você a organizar suas finanças de forma simples e eficiente. Com uma interface amigável, ele permite gerenciar entradas, saídas, planejamento financeiro e funcionalidades extras como geração de listas de mercado em PDF e envio via WhatsApp.
 
-*   **Módulos**: Navegação principal através da barra superior para acessar:
-    *   **Dashboard**: Visão geral do fluxo de caixa, vencimentos e resumos de cartão de crédito.
-    *   **Entradas**: Gerenciar entradas individuais, recorrentes e parceladas.
-    *   **Saídas**: Gerenciar saídas individuais, recorrentes e parceladas.
-    *   **Cadastros**: Gerenciar dados cadastrais.
-    *   **Extras**: Funcionalidades adicionais, como extração de PDFs com lista de mercado e envio via WhatsApp.
-    *   **Planejamento**: Planejamento financeiro.
-*   **Segurança**: O sistema possui autenticação segura e uma base de dados segura com duplo fator de autenticação, acessível online.
-*   **Estilos**: Cores principais:
-    *   Teal: `#008080`
-    *   Cinza Claro: `#F0F0F0`
-    *   Laranja: `#FFA500`
+---
 
-## Tecnologias Utilizadas
-    
-*   **Next.js**: Framework web para construção da aplicação.
-*   **TypeScript**: Linguagem de programação para tipagem estática do código.
-*   **Tailwind CSS**: Framework CSS para estilização da aplicação.
-*   **Shadcn UI**: Biblioteca de componentes reutilizáveis.
-*   **React**: Biblioteca para construção de interfaces de usuário.
-*   **Firebase**: Plataforma para serviços de backend (banco de dados, autenticação).
+## 🚀 Funcionalidades Principais
 
-## Instalação
+- **Dashboard**: Visão geral de fluxo de caixa, vencimentos e resumos de cartão de crédito.
+- **Entradas**: Registro de entradas financeiras (com data, categoria, descrição e valor).
+- **Saídas**: Controle de gastos, incluindo despesas recorrentes e parceladas.
+- **Cadastros**:
+  - Fontes de Renda
+  - Contas Bancárias
+  - Cartões de Crédito
+  - Metas Financeiras
+- **Planejamento**: Definição de orçamentos e metas.
+- **Extras**:
+  - Geração de PDF com lista de mercado (`src/services/pdf-generator.ts`)
+  - Envio da lista via WhatsApp (`src/services/whatsapp.ts`)
 
-Siga os passos abaixo para configurar o projeto do zero. Este guia irá cobrir desde a instalação do Node.js até a execução do projeto.
+---
+
+## 🔒 Segurança
+
+- Autenticação de usuários via **Firebase Authentication**.
+- Suporte a dois fatores de autenticação (2FA).
+- Armazenamento seguro de dados.
+
+---
+
+## ⚙️ Tecnologias Utilizadas
+
+- **Next.js** (com TypeScript)
+- **Tailwind CSS** + Shadcn UI (componentes de interface)
+- **Firebase** (autenticação e backend)
+- **Genkit + Google Gemini AI** (para automações inteligentes via IA)
+- **React Hook Form** e **Zod** (formulários e validações)
+- **Radix UI** (componentes acessíveis)
+- **Recharts** (gráficos)
+- **date-fns** (manipulação de datas)
+
+---
+
+## 🛠️ Como Preparar o Ambiente
 
 ### 1. Pré-requisitos
 
-Antes de começar, certifique-se de ter o seguinte instalado em sua máquina:
+- **Node.js (LTS)**: https://nodejs.org/
+- **npm** (gerenciador de pacotes, incluído no Node.js)
 
-*   **Node.js**: Acesse o site oficial do [Node.js](https://nodejs.org/) e baixe a versão LTS (Long Term Support) recomendada. Após o download, instale o Node.js no seu computador.
-*   **npm**: O npm (Node Package Manager) é distribuído junto com o Node.js. Para verificar se o Node.js e o npm estão instalados corretamente, abra o seu terminal ou prompt de comando e execute os seguintes comandos:
+Verifique no terminal se estão instalados:
 
-    
+```bash
+node -v
+npm -v
+```
+
+### 2. Clonar o Repositório
+
+```bash
+git clone https://github.com/viniciusad/studio.git
+cd studio
+```
+
+### 3. Instalar Dependências
+
+```bash
+npm install
+```
+
+### 4. Configurar Variáveis de Ambiente
+
+Crie um arquivo `.env` na raiz do projeto com o seguinte conteúdo (ajuste conforme suas credenciais):
+
+```
+GOOGLE_GENAI_API_KEY=your-google-api-key
+```
+
+Essa chave é necessária para a integração com o Google Gemini AI via Genkit.
+
+### 5. Rodar o Projeto em Ambiente de Desenvolvimento
+
+```bash
+npm run dev
+```
+
+A aplicação estará disponível em:
+
+```
+http://localhost:9002
+```
+
+### 6. Rodar os Fluxos de Inteligência Artificial (opcional)
+
+```bash
+npm run genkit:dev
+```
+
+Este comando ativa os fluxos de IA definidos no arquivo `src/ai/dev.ts`.
+
+### 7. Executar os Testes
+
+```bash
+npm run test
+```
+
+---
+
+## 📂 Estrutura de Diretórios Importantes
+
+```
+src/
+├── ai/                      # Configuração da integração com Genkit e Google AI
+├── app/                     # Páginas da aplicação (Entradas, Saídas, Cadastros, Planejamento, Extras)
+├── components/              # Componentes reutilizáveis (UI)
+├── services/
+│   ├── pdf-generator.ts     # Geração de PDF com a lista de mercado
+│   └── whatsapp.ts          # Envio de mensagens via WhatsApp
+└── hooks/                   # Hooks personalizados
+```
+
+---
+
+## 💬 Contato
+
+Este projeto foi desenvolvido por Vinicius A. Silva.
+Contribuições, sugestões ou dúvidas? Fique à vontade para abrir uma issue ou pull request no repositório.
