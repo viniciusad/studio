@@ -1,10 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import {useState} from 'react';
-import {Button} from "@/components/ui/button";
+import {Button} from '@/components/ui/button';
 
-const Navbar = () => {
+const Navbar = ({setEntriesOpen, setExitsOpen}) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,24 +22,24 @@ const Navbar = () => {
     <nav className="bg-primary text-primary-foreground p-4 sticky top-0 z-10">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex justify-start items-center space-x-4">
-          <Link href="/" className="font-bold text-lg hover:underline">
+          <Button variant="ghost" className="font-bold text-lg hover:underline">
             Dashboard
-          </Link>
-          <Link href="/entries" className="hover:underline">
+          </Button>
+          <Button variant="ghost" className="hover:underline" onClick={() => setEntriesOpen(true)}>
             Entradas
-          </Link>
-          <Link href="/exits" className="hover:underline">
+          </Button>
+          <Button variant="ghost" className="hover:underline" onClick={() => setExitsOpen(true)}>
             Saídas
-          </Link>
-          <Link href="/planning" className="hover:underline">
+          </Button>
+          <Button variant="ghost" className="hover:underline">
             Planejamento
-          </Link>
-          <Link href="/extras" className="hover:underline">
+          </Button>
+          <Button variant="ghost" className="hover:underline">
             Extras
-          </Link>
-          <Link href="/cadastros" className="hover:underline">
+          </Button>
+          <Button variant="ghost" className="hover:underline">
             Cadastros
-          </Link>
+          </Button>
         </div>
 
         <div className="flex justify-end items-center">
