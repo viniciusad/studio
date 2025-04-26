@@ -271,7 +271,7 @@ const Dashboard = () => {
           <SelectContent>
             <SelectItem value="">Todas as Categorias</SelectItem>
             {categories.map(category => (
-              <SelectItem key={category} value={category || ''}>{category}</SelectItem>
+              <SelectItem key={category} value={category}>{category}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -283,7 +283,7 @@ const Dashboard = () => {
           <SelectContent>
             <SelectItem value="">Todos os Tipos</SelectItem>
             {types.map(type => (
-              <SelectItem key={type} value={type || ''}>{type}</SelectItem>
+              <SelectItem key={type} value={type}>{type}</SelectItem>
             ))}
           </SelectContent>
         </Select>
