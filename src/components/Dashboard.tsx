@@ -31,6 +31,8 @@ import {cn} from '@/lib/utils';
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from '@/components/ui/alert-dialog';
 import {format, parseISO} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
+import {Calendar} from '@/components/ui/calendar';
+import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
 
 // Mock data for charts and table
 const mockData = [
@@ -169,14 +171,36 @@ const mockData = [
   },
 ];
 
+// Function to generate distinct colors for pie charts
+const generateColors = (count: number) => {
+  const colors = [];
+  for (let i = 0; i < count; i++) {
+    const hue = (i * 360 / count) % 360;
+    colors.push(`hsl(${hue}, 70%, 50%)`);
+  }
+  return colors;
+};
+
 const Dashboard = () => {
-  const [filterDate, setFilterDate] = useState('');
+  const [date, setDate] = useState<undefined | {
+    from?: Date;
+    to?: Date;
+  }>({
+    from: new Date(new Date().getFullYear(), 0, 1), // Beginning of the year
+    to: new Date(), // Today
+  });
+
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string | null>(null);
   const [dateGranularity, setDateGranularity] = useState('month'); // Default granularity
 
+  // Format the date range for filtering
+  const formattedDateFrom = date?.from ? format(date.from, 'yyyy-MM-dd') : '';
+  const formattedDateTo = date?.to ? format(date.to, 'yyyy-MM-dd') : '';
+
   const filteredData = mockData.filter(item => {
-    if (filterDate && !item.date.includes(filterDate)) {
+    const itemDate = parseISO(item.date);
+    if (date?.from && date?.to && (itemDate < date.from || itemDate > date.to)) {
       return false;
     }
     if (filterCategory && filterCategory !== null && item.category !== filterCategory) {
@@ -230,12 +254,23 @@ const Dashboard = () => {
   }, []);
 
   // Process data for the pie chart (Distribuição por Categoria)
-  const pieChartData = filteredData.reduce((acc: any, item) => {
+  const categoryPieChartData = filteredData.reduce((acc: any, item) => {
     const existingCategory = acc.find((entry: any) => entry.name === item.category);
     if (existingCategory) {
       existingCategory.value += item.amount;
     } else {
       acc.push({name: item.category, value: item.amount});
+    }
+    return acc;
+  }, []);
+
+  // Process data for the pie chart (Distribuição por Tipo)
+  const typePieChartData = filteredData.reduce((acc: any, item) => {
+    const existingType = acc.find((entry: any) => entry.name === item.type);
+    if (existingType) {
+      existingType.value += item.amount;
+    } else {
+      acc.push({name: item.type, value: item.amount});
     }
     return acc;
   }, []);
@@ -252,18 +287,43 @@ const Dashboard = () => {
   const categories = [...new Set(mockData.map(item => item.category))];
   const types = [...new Set(mockData.map(item => item.type))];
 
+  // Generate colors for category pie chart
+  const categoryColors = generateColors(categoryPieChartData.length);
+  // Generate colors for type pie chart
+  const typeColors = generateColors(typePieChartData.length);
+
   return (
     <div className="container mx-auto mt-8">
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Input
-          type="date"
-          placeholder="Filtrar por data"
-          value={filterDate}
-          onChange={e => setFilterDate(e.target.value)}
-          className="w-auto"
-        />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={'outline'}
+              className={cn(
+                'w-[200px] justify-start text-left font-normal',
+                !date?.from && 'text-muted-foreground'
+              )}
+            >
+              {date?.from && date?.to ? (
+                format(date.from, 'dd/MM/yyyy', {locale: ptBR}) + ' - ' + format(date.to, 'dd/MM/yyyy', {locale: ptBR})
+              ) : (
+                <span>Selecione o intervalo de datas</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="range"
+              defaultMonth={date?.from}
+              selected={date}
+              onSelect={setDate}
+              disabled={false}
+            />
+          </PopoverContent>
+        </Popover>
+
         <Select onValueChange={(value) => setFilterCategory(value === 'null' ? null : value)}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrar por categoria"/>
@@ -301,7 +361,10 @@ const Dashboard = () => {
         </Select>
 
         <Button variant="outline" onClick={() => {
-          setFilterDate('');
+          setDate({
+            from: new Date(new Date().getFullYear(), 0, 1), // Beginning of the year
+            to: new Date(), // Today
+          });
           setFilterCategory(null);
           setFilterType(null);
           setDateGranularity('month');
@@ -345,41 +408,90 @@ const Dashboard = () => {
         </ResponsiveContainer>
       </div>
 
-      <div className="mb-8">
-        <h2 className="font-bold mb-2">Distribuição por Categoria</h2>
-        <ResponsiveContainer width="100%" height={400}>
-          <PieChart>
-            <Pie
-              dataKey="value"
-              isAnimationActive={true}
-              data={pieChartData}
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              fill="#8884d8"
-              label={({cx, cy, midAngle, innerRadius, outerRadius, percent, index}: any) => {
-                const RADIAN = Math.PI / 180;
-                const radius = 25 + outerRadius;
-                const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <h2 className="font-bold mb-2">Distribuição por Categoria</h2>
+          <ResponsiveContainer width="100%" height={400}>
+            <PieChart>
+              <Pie
+                dataKey="value"
+                isAnimationActive={true}
+                data={categoryPieChartData}
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                label={({cx, cy, midAngle, innerRadius, outerRadius, percent, index}: any) => {
+                  const RADIAN = Math.PI / 180;
+                  const radius = 25 + outerRadius;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-                return (
-                  <text
-                    x={x}
-                    y={y}
-                    fill="black"
-                    textAnchor={x > cx ? 'start' : 'end'}
-                    dominantBaseline="central"
-                  >
-                    {`${pieChartData[index].name} ${(percent * 100).toFixed(0)}%`}
-                  </text>
-                );
-              }}
-            />
-            <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`}/>
-            <Legend/>
-          </PieChart>
-        </ResponsiveContainer>
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      fill="black"
+                      textAnchor={x > cx ? 'start' : 'end'}
+                      dominantBaseline="central"
+                    >
+                      {`${categoryPieChartData[index].name} ${(percent * 100).toFixed(0)}%`}
+                    </text>
+                  );
+                }}
+              >
+                {
+                  categoryPieChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]}/>
+                  ))
+                }
+              </Pie>
+              <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`}/>
+              <Legend/>
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div>
+          <h2 className="font-bold mb-2">Distribuição por Tipo</h2>
+          <ResponsiveContainer width="100%" height={400}>
+            <PieChart>
+              <Pie
+                dataKey="value"
+                isAnimationActive={true}
+                data={typePieChartData}
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                label={({cx, cy, midAngle, innerRadius, outerRadius, percent, index}: any) => {
+                  const RADIAN = Math.PI / 180;
+                  const radius = 25 + outerRadius;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      fill="black"
+                      textAnchor={x > cx ? 'start' : 'end'}
+                      dominantBaseline="central"
+                    >
+                      {`${typePieChartData[index].name} ${(percent * 100).toFixed(0)}%`}
+                    </text>
+                  );
+                }}
+              >
+                {
+                  typePieChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={typeColors[index % typeColors.length]}/>
+                  ))
+                }
+              </Pie>
+              <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`}/>
+              <Legend/>
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <div>
@@ -483,3 +595,5 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+import { Cell } from 'recharts';
