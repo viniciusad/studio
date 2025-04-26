@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import {useState} from 'react';
+import {Button} from "@/components/ui/button";
 
 const Navbar = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -21,15 +22,25 @@ const Navbar = () => {
   return (
     <nav className="bg-primary text-primary-foreground p-4 sticky top-0 z-10">
       <div className="container mx-auto flex justify-between items-center">
-        <div className="flex justify-start items-center">
-          <Link href="/" className="font-bold text-lg">
+        <div className="flex justify-start items-center space-x-4">
+          <Link href="/" className="font-bold text-lg hover:underline">
             Dashboard
           </Link>
-          <Link href="/entries">Entradas</Link>
-          <Link href="/exits">Saídas</Link>
-          <Link href="/planning">Planejamento</Link>
-          <Link href="/extras">Extras</Link>
-          <Link href="/cadastros">Cadastros</Link>
+          <Link href="/entries" className="hover:underline">
+            Entradas
+          </Link>
+          <Link href="/exits" className="hover:underline">
+            Saídas
+          </Link>
+          <Link href="/planning" className="hover:underline">
+            Planejamento
+          </Link>
+          <Link href="/extras" className="hover:underline">
+            Extras
+          </Link>
+          <Link href="/cadastros" className="hover:underline">
+            Cadastros
+          </Link>
         </div>
 
         <div className="flex justify-end items-center">
