@@ -207,7 +207,7 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
     }
     if (filterCategory && filterCategory !== null && item.category !== filterCategory) {
       return false;
-    }
+     }
     if (filterType && filterType !== null && item.type !== filterType) {
       return false;
     }
@@ -355,7 +355,7 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
         </div>
 
         <div className="w-full md:w-auto">
-          <Select onValueChange={handleCategoryFilterChange} className="max-w-[180px] w-full">
+          <Select onValueChange={handleCategoryFilterChange} defaultValue={filterCategory || undefined} className="max-w-[180px] w-full">
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Filtrar por categoria"/>
             </SelectTrigger>
@@ -369,7 +369,7 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
         </div>
 
         <div className="w-full md:w-auto">
-          <Select onValueChange={handleTypeFilterChange} className="max-w-[180px] w-full">
+          <Select onValueChange={handleTypeFilterChange} defaultValue={filterType || undefined} className="max-w-[180px] w-full">
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Filtrar por tipo"/>
             </SelectTrigger>
