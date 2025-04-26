@@ -5,9 +5,32 @@ import {Button} from '@/components/ui/button';
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from '@/components/ui/dialog';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from '@/components/ui/alert-dialog';
+import {Calendar} from "@/components/ui/calendar";
+import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
+import {format} from "date-fns";
+import {ptBR} from "date-fns/locale";
+import {cn} from "@/lib/utils";
 
 const EntriesPage = () => {
   const [open, setOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [date, setDate] = useState<Date | undefined>(new Date());
+
+  const handleSave = () => {
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmSave = () => {
+    alert('Salvo com sucesso!');
+    setConfirmOpen(false);
+    setOpen(false);
+  };
+
+  const handleCancelSave = () => {
+    setConfirmOpen(false);
+  };
 
   return (
     <div className="container mx-auto mt-8">
@@ -27,7 +50,28 @@ const EntriesPage = () => {
               <Label htmlFor="date" className="text-right">
                 Data
               </Label>
-              <Input id="date" className="col-span-3"/>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={'outline'}
+                    className={cn(
+                      'w-[200px] justify-start text-left font-normal',
+                      !date && 'text-muted-foreground'
+                    )}
+                  >
+                    {date ? format(date, 'dd/MM/yyyy', {locale: ptBR}) : <span>Selecione a data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    defaultMonth={date}
+                    selected={date}
+                    onSelect={setDate}
+                    disabled={false}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="category" className="text-right">
@@ -48,9 +92,25 @@ const EntriesPage = () => {
               <Input id="amount" className="col-span-3"/>
             </div>
           </div>
-          <Button type="submit">Salvar</Button>
+          <Button onClick={handleSave}>Salvar</Button>
+          <Button type="button" variant="secondary" onClick={() => setOpen(false)}>Cancelar</Button>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Salvar</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja salvar esta entrada?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelSave}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSave}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
