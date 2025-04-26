@@ -23,7 +23,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableCaption,
   TableHead,
   TableHeader,
   TableRow,
@@ -120,7 +119,11 @@ const Dashboard = ({mockData}: DashboardProps) => {
     }
 
     return acc;
-  }, []);
+  }, []).sort((a: any, b: any) => { // Sort by date in ascending order
+    const dateA = parseISO(`2000-${a.date.substring(0, 2)}-01`);
+    const dateB = parseISO(`2000-${b.date.substring(0, 2)}-01`);
+    return dateA.getTime() - dateB.getTime();
+  });
 
   // Process data for the pie chart (Distribuição por Categoria)
   const categoryPieChartData = filteredData.reduce((acc: any, item) => {
@@ -203,7 +206,7 @@ const Dashboard = ({mockData}: DashboardProps) => {
           <SelectContent>
             <SelectItem value={null}>Todas as Categorias</SelectItem>
             {categories.map(category => (
-              <SelectItem key={category} value={category ?? ''}>{category}</SelectItem>
+              <SelectItem key={category} value={category}>{category}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -215,7 +218,7 @@ const Dashboard = ({mockData}: DashboardProps) => {
           <SelectContent>
             <SelectItem value={null}>Todos os Tipos</SelectItem>
             {types.map(type => (
-              <SelectItem key={type} value={type ?? ''}>{type}</SelectItem>
+              <SelectItem key={type} value={type}>{type}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -370,4 +373,3 @@ const Dashboard = ({mockData}: DashboardProps) => {
 };
 
 export default Dashboard;
-

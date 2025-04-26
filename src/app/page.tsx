@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/table';
 import {parseISO} from "date-fns";
 import {Edit, Trash2} from "lucide-react";
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 
 export default function Home() {
   const [entriesOpen, setEntriesOpen] = useState(false);
@@ -50,6 +51,12 @@ export default function Home() {
 
   const [mockData, setMockData] = useState<Transaction[]>(initialMockData);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
+  //Edit form
+  const [editDate, setEditDate] = useState<Date | undefined>(new Date());
+  const [editCategory, setEditCategory] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editAmount, setEditAmount] = useState('');
   const [editModalOpen, setEditModalOpen] = useState(false);
 
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
@@ -115,7 +122,39 @@ export default function Home() {
   //Edit/Delete functionality
   const handleEdit = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
+    setEditDate(parseISO(transaction.date));
+    setEditCategory(transaction.category);
+    setEditDescription(transaction.description);
+    setEditAmount(transaction.amount.toString());
     setEditModalOpen(true);
+  };
+
+  const handleConfirmEdit = () => {
+    if (selectedTransaction && editDate && editCategory && editDescription && editAmount) {
+      const updatedTransaction: Transaction = {
+        date: format(editDate, 'yyyy-MM-dd'),
+        category: editCategory,
+        type: selectedTransaction.type,
+        description: editDescription,
+        amount: parseFloat(editAmount),
+      };
+
+      setMockData(mockData.map(item =>
+        item.date === selectedTransaction.date && item.description === selectedTransaction.description ? updatedTransaction : item
+      ));
+
+      setEditDate(new Date());
+      setEditCategory('');
+      setEditDescription('');
+      setEditAmount('');
+      setEditModalOpen(false);
+      setSelectedTransaction(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditModalOpen(false);
+    setSelectedTransaction(null);
   };
 
   const handleRemove = (transaction: Transaction) => {
@@ -385,6 +424,80 @@ export default function Home() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/*Edit Modal*/}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Transação</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editDate" className="text-right">
+                Data
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={'outline'}
+                    className={cn(
+                      'w-[200px] justify-start text-left font-normal',
+                      !editDate && 'text-muted-foreground'
+                    )}
+                  >
+                    {editDate ? format(editDate, 'dd/MM/yyyy', {locale: ptBR}) : <span>Selecione a data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    defaultMonth={editDate}
+                    selected={editDate}
+                    onSelect={setEditDate}
+                    disabled={false}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editCategory" className="text-right">
+                Categoria
+              </Label>
+              <Input
+                id="editCategory"
+                className="col-span-3"
+                value={editCategory}
+                onChange={(e) => setEditCategory(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editDescription" className="text-right">
+                Descrição
+              </Label>
+              <Input
+                id="editDescription"
+                className="col-span-3"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editAmount" className="text-right">
+                Valor
+              </Label>
+              <Input
+                id="editAmount"
+                type="number"
+                className="col-span-3"
+                value={editAmount}
+                onChange={(e) => setEditAmount(e.target.value)}
+              />
+            </div>
+          </div>
+          <Button onClick={handleConfirmEdit}>Salvar</Button>
+          <Button type="button" variant="secondary" onClick={handleCancelEdit}>Cancelar</Button>
+        </DialogContent>
+      </Dialog>
 
       {/*Transactions table section*/}
       <div className="container mx-auto mt-8">
