@@ -6,6 +6,8 @@ import {
   AreaChart,
   CartesianGrid,
   Legend,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -27,6 +29,8 @@ import {
 } from '@/components/ui/table';
 import {cn} from '@/lib/utils';
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from '@/components/ui/alert-dialog';
+import {format, parseISO} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
 
 // Mock data for charts and table
 const mockData = [
@@ -169,6 +173,7 @@ const Dashboard = () => {
   const [filterDate, setFilterDate] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterType, setFilterType] = useState('');
+  const [dateGranularity, setDateGranularity] = useState('month'); // Default granularity
 
   const filteredData = mockData.filter(item => {
     if (filterDate && !item.date.includes(filterDate)) {
@@ -183,13 +188,54 @@ const Dashboard = () => {
     return true;
   });
 
-  // Process data for the chart
-  const chartData = filteredData.reduce((acc: any, item) => {
-    const existingCategory = acc.find((entry: any) => entry.category === item.category);
-    if (existingCategory) {
-      existingCategory.amount += item.amount;
+  // Process data for the area chart (Evolução de Entradas e Saídas)
+  const areaChartData = filteredData.reduce((acc: any, item) => {
+    const date = parseISO(item.date);
+    let formattedDate: string;
+
+    switch (dateGranularity) {
+      case 'day':
+        formattedDate = format(date, 'dd/MM/yyyy', {locale: ptBR});
+        break;
+      case 'week':
+        formattedDate = format(date, 'RRRR - II', {locale: ptBR});
+        break;
+      case 'month':
+        formattedDate = format(date, 'MM/yyyy', {locale: ptBR});
+        break;
+      case 'year':
+        formattedDate = format(date, 'yyyy', {locale: ptBR});
+        break;
+      default:
+        formattedDate = format(date, 'MM/yyyy', {locale: ptBR});
+    }
+
+    const existingDateEntry = acc.find((entry: any) => entry.date === formattedDate);
+
+    if (existingDateEntry) {
+      if (item.type === 'Entrada') {
+        existingDateEntry.entradas += item.amount;
+      } else {
+        existingDateEntry.saidas += item.amount;
+      }
     } else {
-      acc.push({category: item.category, amount: item.amount});
+      acc.push({
+        date: formattedDate,
+        entradas: item.type === 'Entrada' ? item.amount : 0,
+        saidas: item.type === 'Saída' ? item.amount : 0,
+      });
+    }
+
+    return acc;
+  }, []);
+
+  // Process data for the pie chart (Distribuição por Categoria)
+  const pieChartData = filteredData.reduce((acc: any, item) => {
+    const existingCategory = acc.find((entry: any) => entry.name === item.category);
+    if (existingCategory) {
+      existingCategory.value += item.amount;
+    } else {
+      acc.push({name: item.category, value: item.amount});
     }
     return acc;
   }, []);
@@ -210,19 +256,20 @@ const Dashboard = () => {
     <div className="container mx-auto mt-8">
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <Input
           type="date"
           placeholder="Filtrar por data"
           value={filterDate}
           onChange={e => setFilterDate(e.target.value)}
+          className="w-auto"
         />
         <Select onValueChange={setFilterCategory}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrar por categoria"/>
-            </SelectTrigger>
+          </SelectTrigger>
           <SelectContent>
-            <SelectItem value={null}>Todas as Categorias</SelectItem>
+            <SelectItem value="">Todas as Categorias</SelectItem>
             {categories.map(category => (
               <SelectItem key={category} value={category}>{category}</SelectItem>
             ))}
@@ -234,17 +281,33 @@ const Dashboard = () => {
             <SelectValue placeholder="Filtrar por tipo"/>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={null}>Todos os Tipos</SelectItem>
+            <SelectItem value="">Todos os Tipos</SelectItem>
             {types.map(type => (
               <SelectItem key={type} value={type}>{type}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+
+        <Select onValueChange={setDateGranularity}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Granularidade da Data"/>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="day">Dia</SelectItem>
+            <SelectItem value="week">Semana</SelectItem>
+            <SelectItem value="month">Mês</SelectItem>
+            <SelectItem value="year">Ano</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Button variant="outline" onClick={() => {
           setFilterDate('');
           setFilterCategory('');
           setFilterType('');
-        }}>Limpar Filtros</Button>
+          setDateGranularity('month');
+        }}>
+          Limpar Filtros
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -263,17 +326,59 @@ const Dashboard = () => {
       </div>
 
       <div className="mb-8">
-        <h2 className="font-bold mb-2">Fluxo de Caixa por Categoria</h2>
+        <h2 className="font-bold mb-2">Evolução de Entradas e Saídas</h2>
         <ResponsiveContainer width="100%" height={400}>
-          <AreaChart data={chartData}>
+          <AreaChart data={areaChartData}>
             <CartesianGrid strokeDasharray="3 3"/>
-            <XAxis dataKey="category"/>
+            <XAxis dataKey="date"/>
             <YAxis/>
-            <Tooltip/>
+            <Tooltip
+              formatter={(value: number) => `R$ ${value.toFixed(2)}`}
+              labelFormatter={(value: string) => `Data: ${value}`}
+            />
             <Legend/>
-            <Area type="monotone" dataKey="amount" stroke="#008080" fill="#008080"
-                  label={{formatter: (value: any) => `R$ ${value.toFixed(2)}`}}/>
+            <Area type="monotone" dataKey="entradas" stackId="1" stroke="#82ca9d" fill="#82ca9d"
+                  name="Entradas"/>
+            <Area type="monotone" dataKey="saidas" stackId="1" stroke="#e4717a" fill="#e4717a"
+                  name="Saídas"/>
           </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="font-bold mb-2">Distribuição por Categoria</h2>
+        <ResponsiveContainer width="100%" height={400}>
+          <PieChart>
+            <Pie
+              dataKey="value"
+              isAnimationActive={true}
+              data={pieChartData}
+              cx="50%"
+              cy="50%"
+              outerRadius={80}
+              fill="#8884d8"
+              label={({cx, cy, midAngle, innerRadius, outerRadius, percent, index}: any) => {
+                const RADIAN = Math.PI / 180;
+                const radius = 25 + outerRadius;
+                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                return (
+                  <text
+                    x={x}
+                    y={y}
+                    fill="black"
+                    textAnchor={x > cx ? 'start' : 'end'}
+                    dominantBaseline="central"
+                  >
+                    {`${pieChartData[index].name} ${(percent * 100).toFixed(0)}%`}
+                  </text>
+                );
+              }}
+            />
+            <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`}/>
+            <Legend/>
+          </PieChart>
         </ResponsiveContainer>
       </div>
 
@@ -294,7 +399,7 @@ const Dashboard = () => {
           <TableBody>
             {filteredData.map(item => (
               <TableRow key={item.date + item.description}>
-                <TableCell>{item.date}</TableCell>
+                <TableCell>{format(parseISO(item.date), 'dd/MM/yyyy', {locale: ptBR})}</TableCell>
                 <TableCell>{item.category}</TableCell>
                 <TableCell>{item.type}</TableCell>
                 <TableCell>{item.description}</TableCell>
@@ -310,9 +415,6 @@ const Dashboard = () => {
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
                           <DialogTitle>Editar Transação</DialogTitle>
-                          {/*<DialogDescription>
-                            Faça as alterações necessárias e salve.
-                          </DialogDescription>*/}
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                           <div className="grid grid-cols-4 items-center gap-4">
