@@ -157,8 +157,8 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
   const categories = [...new Set(initialData.map(item => item.category))];
   const types = [...new Set(initialData.map(item => item.type))];
 
-  const entradaColor = '#388E3C'; // Mais escuro que o verde padrão
-  const saidaColor = '#D32F2F'; // Mais escuro que o vermelho padrão
+  const entradaColor = '#2E7D32'; // Mais escuro que o verde padrão
+  const saidaColor = '#C62828'; // Mais escuro que o vermelho padrão
 
   const saldo = mockData.filter(item => {
     const itemDate = parseISO(item.date);
@@ -516,6 +516,7 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
         </div>
       </div>
 
+      {/*Transactions table section*/}
       <div className="container mx-auto mt-8 overflow-x-auto">
         <h2 className="text-2xl font-bold mb-4">Transações Salvas</h2>
         <Table>
@@ -645,3 +646,4 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
 };
 
 export default Dashboard;
+
