@@ -37,7 +37,7 @@ import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
 import {Transaction} from "@/data/mock";
 
 // Function to generate distinct colors for pie charts
-const generateColors = (count: number) => {
+const generateColors = (count: number, baseColor: string = 'hsl(139, 78%, 32%)') => {
   const colors = [];
   for (let i = 0; i < count; i++) {
     const hue = (i * 360 / count) % 360;
@@ -161,6 +161,9 @@ const Dashboard = ({mockData}: DashboardProps) => {
   // Generate colors for type pie chart
   const typeColors = generateColors(typePieChartData.length);
 
+  const entradaColor = '#388E3C'; // Mais escuro que o verde padrão
+  const saidaColor = '#D32F2F'; // Mais escuro que o vermelho padrão
+
   return (
     <div className="container mx-auto mt-8">
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
@@ -269,9 +272,9 @@ const Dashboard = ({mockData}: DashboardProps) => {
               labelFormatter={(value: string) => `Data: ${value}`}
             />
             <Legend/>
-            <Area type="monotone" dataKey="entradas" stackId="1" stroke="#82ca9d" fill="#82ca9d"
+            <Area type="monotone" dataKey="entradas" stackId="1" stroke={entradaColor} fill={entradaColor}
                   name="Entradas"/>
-            <Area type="monotone" dataKey="saidas" stackId="1" stroke="#e4717a" fill="#e4717a"
+            <Area type="monotone" dataKey="saidas" stackId="1" stroke={saidaColor} fill={saidaColor}
                   name="Saídas"/>
           </AreaChart>
         </ResponsiveContainer>
@@ -352,7 +355,7 @@ const Dashboard = ({mockData}: DashboardProps) => {
               >
                 {
                   typePieChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={typeColors[index % typeColors.length]}/>
+                    <Cell key={`cell-${index}`} fill={entry.name === 'Entrada' ? entradaColor : saidaColor}/>
                   ))
                 }
               </Pie>
@@ -367,3 +370,4 @@ const Dashboard = ({mockData}: DashboardProps) => {
 };
 
 export default Dashboard;
+
