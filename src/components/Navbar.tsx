@@ -4,7 +4,13 @@ import {useState} from 'react';
 import {Button} from '@/components/ui/button';
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
-const Navbar = ({setEntriesOpen, setExitsOpen}) => {
+const Navbar = ({
+  setEntriesOpen,
+  setExitsOpen,
+  setPlanningOpen,
+  setExtrasOpen,
+  setCadastrosOpen
+}) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,13 +38,13 @@ const Navbar = ({setEntriesOpen, setExitsOpen}) => {
           <Button variant="ghost" className="hover:underline" onClick={() => setExitsOpen(true)}>
             Saídas
           </Button>
-          <Button variant="ghost" className="hover:underline">
+          <Button variant="ghost" className="hover:underline" onClick={() => setPlanningOpen(true)}>
             Planejamento
           </Button>
-          <Button variant="ghost" className="hover:underline">
+          <Button variant="ghost" className="hover:underline" onClick={() => setExtrasOpen(true)}>
             Extras
           </Button>
-          <Button variant="ghost" className="hover:underline">
+          <Button variant="ghost" className="hover:underline" onClick={() => setCadastrosOpen(true)}>
             Cadastros
           </Button>
         </div>
