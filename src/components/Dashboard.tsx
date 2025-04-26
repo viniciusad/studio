@@ -575,6 +575,7 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
                     <TableHead onClick={() => handleSort('type')}>Tipo</TableHead>
                     <TableHead onClick={() => handleSort('description')}>Descrição</TableHead>
                     <TableHead className="text-right" onClick={() => handleSort('amount')}>Valor</TableHead>
+                    <TableHead className="text-center">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -585,6 +586,14 @@ const Dashboard = ({mockData: initialData}: DashboardProps) => {
                       <TableCell>{item.type}</TableCell>
                       <TableCell>{item.description}</TableCell>
                       <TableCell className="text-right">R$ {item.amount.toFixed(2)}</TableCell>
+                       <TableCell className="text-center">
+                  <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
+                    <Edit className="h-4 w-4"/>
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleRemove(item)}>
+                    <Trash2 className="h-4 w-4"/>
+                  </Button>
+                </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
