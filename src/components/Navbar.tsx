@@ -27,8 +27,8 @@ const Navbar = ({
 
   return (
     <nav className="bg-primary text-primary-foreground p-4 sticky top-0 z-10">
-      <div className="container mx-auto flex justify-between items-center">
-        <div className="flex justify-start items-center space-x-4">
+      <div className="container mx-auto flex justify-between items-center flex-wrap">
+        <div className="flex justify-start items-center space-x-4 mb-2 md:mb-0">
           <Button variant="ghost" className="font-bold text-lg hover:underline">
             Dashboard
           </Button>

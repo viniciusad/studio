@@ -26,6 +26,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableCaption,
 } from '@/components/ui/table';
 import {cn} from '@/lib/utils';
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from '@/components/ui/alert-dialog';
@@ -34,6 +35,7 @@ import {ptBR} from 'date-fns/locale';
 import {Calendar} from '@/components/ui/calendar';
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
 import {Transaction} from "@/data/mock";
+import {Edit, Trash2} from "lucide-react";
 
 // Function to generate distinct colors for pie charts
 const generateColors = (count: number, baseColor: string = 'hsl(139, 78%, 32%)') => {
@@ -201,8 +203,8 @@ const Dashboard = ({mockData}: DashboardProps) => {
           </PopoverContent>
         </Popover>
 
-        <Select onValueChange={(value) => setFilterCategory(value === 'null' ? null : value)}>
-          <SelectTrigger className="w-[180px]">
+        <Select onValueChange={(value) => setFilterCategory(value === 'null' ? null : value)} className="max-w-[180px] w-full">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Filtrar por categoria"/>
           </SelectTrigger>
           <SelectContent>
@@ -213,8 +215,8 @@ const Dashboard = ({mockData}: DashboardProps) => {
           </SelectContent>
         </Select>
 
-        <Select onValueChange={(value) => setFilterType(value === 'null' ? null : value)}>
-          <SelectTrigger className="w-[180px]">
+        <Select onValueChange={(value) => setFilterType(value === 'null' ? null : value)} className="max-w-[180px] w-full">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Filtrar por tipo"/>
           </SelectTrigger>
           <SelectContent>
@@ -225,8 +227,8 @@ const Dashboard = ({mockData}: DashboardProps) => {
           </SelectContent>
         </Select>
 
-        <Select onValueChange={setDateGranularity}>
-          <SelectTrigger className="w-[180px]">
+        <Select onValueChange={setDateGranularity} className="max-w-[180px] w-full">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Granularidade da Data"/>
           </SelectTrigger>
           <SelectContent>
@@ -245,7 +247,7 @@ const Dashboard = ({mockData}: DashboardProps) => {
           setFilterCategory(null);
           setFilterType(null);
           setDateGranularity('month');
-        }}>
+        }} className="w-full max-w-[180px]">
           Limpar Filtros
         </Button>
       </div>
@@ -369,6 +371,40 @@ const Dashboard = ({mockData}: DashboardProps) => {
             </PieChart>
           </ResponsiveContainer>
         </div>
+      </div>
+       <div className="container mx-auto mt-8 overflow-x-auto">
+        <h2 className="text-2xl font-bold mb-4">Transações Salvas</h2>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[150px]">Data</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="text-center">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredData.map(item => (
+              <TableRow key={item.date + item.description}>
+                <TableCell className="font-medium">{format(parseISO(item.date), 'dd/MM/yyyy', {locale: ptBR})}</TableCell>
+                <TableCell>{item.category}</TableCell>
+                <TableCell>{item.type}</TableCell>
+                <TableCell>{item.description}</TableCell>
+                <TableCell className="text-right">R$ {item.amount.toFixed(2)}</TableCell>
+                <TableCell className="text-center">
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                    <Edit className="h-4 w-4"/>
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                    <Trash2 className="h-4 w-4"/>
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
