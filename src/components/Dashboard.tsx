@@ -51,13 +51,8 @@ interface DashboardProps {
 }
 
 const Dashboard = ({mockData}: DashboardProps) => {
-  const [date, setDate] = useState<undefined | {
-    from?: Date;
-    to?: Date;
-  }>({
-    from: new Date(new Date().getFullYear(), 0, 1), // Beginning of the year
-    to: new Date(), // Today
-  });
+  const [fromDate, setFromDate] = useState<Date | undefined>(new Date(new Date().getFullYear(), 0, 1));
+  const [toDate, setToDate] = useState<Date | undefined>(new Date());
 
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string | null>(null);
@@ -75,12 +70,12 @@ const Dashboard = ({mockData}: DashboardProps) => {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
 
   // Format the date range for filtering
-  const formattedDateFrom = date?.from ? format(date.from, 'yyyy-MM-dd') : '';
-  const formattedDateTo = date?.to ? format(date.to, 'yyyy-MM-dd') : '';
+  const formattedDateFrom = fromDate ? format(fromDate, 'yyyy-MM-dd') : '';
+  const formattedDateTo = toDate ? format(toDate, 'yyyy-MM-dd') : '';
 
   const filteredData = mockData.filter(item => {
     const itemDate = parseISO(item.date);
-    if (date?.from && date?.to && (itemDate < date.from || itemDate > date.to)) {
+    if (fromDate && toDate && (itemDate < fromDate || itemDate > toDate)) {
       return false;
     }
     if (filterCategory && filterCategory !== null && item.category !== filterCategory) {
@@ -245,24 +240,39 @@ const Dashboard = ({mockData}: DashboardProps) => {
                 variant={'outline'}
                 className={cn(
                   'w-[200px] justify-start text-left font-normal',
-                  !date?.from && 'text-muted-foreground'
+                  !fromDate && 'text-muted-foreground'
                 )}
               >
-                {date?.from && date?.to ? (
-                  format(date.from, 'dd/MM/yyyy', {locale: ptBR}) + ' - ' + format(date.to, 'dd/MM/yyyy', {locale: ptBR})
+                {fromDate ? (
+                  format(fromDate, 'dd/MM/yyyy', {locale: ptBR}) + ' - ' + format(toDate!, 'dd/MM/yyyy', {locale: ptBR})
                 ) : (
                   <span>Selecione o intervalo de datas</span>
                 )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={setDate}
-                disabled={false}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-center font-semibold">De</p>
+                  <Calendar
+                    mode="single"
+                    defaultMonth={fromDate}
+                    selected={fromDate}
+                    onSelect={setFromDate}
+                    disabled={false}
+                  />
+                </div>
+                <div>
+                  <p className="text-center font-semibold">Até</p>
+                  <Calendar
+                    mode="single"
+                    defaultMonth={toDate}
+                    selected={toDate}
+                    onSelect={setToDate}
+                    disabled={false}
+                  />
+                </div>
+              </div>
             </PopoverContent>
           </Popover>
         </div>
@@ -311,10 +321,8 @@ const Dashboard = ({mockData}: DashboardProps) => {
 
         <div className="w-full md:w-auto">
           <Button variant="outline" onClick={() => {
-            setDate({
-              from: new Date(new Date().getFullYear(), 0, 1), // Beginning of the year
-              to: new Date(), // Today
-            });
+            setFromDate(new Date(new Date().getFullYear(), 0, 1));
+            setToDate(new Date());
             setFilterCategory(null);
             setFilterType(null);
             setDateGranularity('month');
