@@ -4,7 +4,7 @@ import Dashboard from '@/components/Dashboard';
 import Navbar from '@/components/Navbar';
 import {useState} from 'react';
 import {Sheet, SheetContent, SheetHeader, SheetTitle} from '@/components/ui/sheet';
-import {Label} from "@/components/ui/label";
+import {Label} from '@/components/ui/label';
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
@@ -14,6 +14,17 @@ import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {format} from "date-fns";
 import {ptBR} from "date-fns/locale";
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from "@/components/ui/alert-dialog";
+import {mockData as initialMockData, Transaction} from "@/data/mock";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableCaption,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {parseISO} from "date-fns";
 
 export default function Home() {
   const [entriesOpen, setEntriesOpen] = useState(false);
@@ -36,12 +47,29 @@ export default function Home() {
   const [exitAmount, setExitAmount] = useState('');
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
 
+  const [mockData, setMockData] = useState<Transaction[]>(initialMockData);
+
   const handleEntrySave = () => {
     setConfirmEntryOpen(true);
   };
 
   const handleConfirmEntrySave = () => {
-    alert('Entrada salva com sucesso!');
+    if (entryDate && entryCategory && entryDescription && entryAmount) {
+      const newEntry: Transaction = {
+        date: format(entryDate, 'yyyy-MM-dd'),
+        category: entryCategory,
+        type: 'Entrada',
+        description: entryDescription,
+        amount: parseFloat(entryAmount),
+      };
+
+      setMockData([...mockData, newEntry]);
+      setEntryDate(new Date());
+      setEntryCategory('');
+      setEntryDescription('');
+      setEntryAmount('');
+    }
+
     setConfirmEntryOpen(false);
     setEntriesOpen(false);
   };
@@ -55,7 +83,22 @@ export default function Home() {
   };
 
   const handleConfirmExitSave = () => {
-    alert('Saída salva com sucesso!');
+    if (exitDate && exitCategory && exitDescription && exitAmount) {
+      const newExit: Transaction = {
+        date: format(exitDate, 'yyyy-MM-dd'),
+        category: exitCategory,
+        type: 'Saída',
+        description: exitDescription,
+        amount: parseFloat(exitAmount),
+      };
+
+      setMockData([...mockData, newExit]);
+      setExitDate(new Date());
+      setExitCategory('');
+      setExitDescription('');
+      setExitAmount('');
+    }
+
     setConfirmExitOpen(false);
     setExitsOpen(false);
   };
@@ -74,7 +117,7 @@ export default function Home() {
         setCadastrosOpen={setCadastrosOpen}
       />
       <main className="container mx-auto mt-8">
-        <Dashboard />
+        <Dashboard mockData={mockData}/>
       </main>
 
       {/*Entradas Modal*/}
@@ -295,7 +338,33 @@ export default function Home() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <div className="container mx-auto mt-8">
+        <h2 className="text-2xl font-bold mb-4">Transações Salvas</h2>
+        <Table>
+          <TableCaption>Lista detalhada de todas as transações salvas.</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Data</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {mockData.map(item => (
+              <TableRow key={item.date + item.description}>
+                <TableCell>{format(parseISO(item.date), 'dd/MM/yyyy', {locale: ptBR})}</TableCell>
+                <TableCell>{item.category}</TableCell>
+                <TableCell>{item.type}</TableCell>
+                <TableCell>{item.description}</TableCell>
+                <TableCell className="text-right">R$ {item.amount.toFixed(2)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </>
   );
 }
-

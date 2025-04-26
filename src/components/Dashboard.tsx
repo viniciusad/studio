@@ -34,7 +34,7 @@ import {format, parseISO} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 import {Calendar} from '@/components/ui/calendar';
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
-import {mockData} from '@/data/mock';
+import {Transaction} from "@/data/mock";
 
 // Function to generate distinct colors for pie charts
 const generateColors = (count: number) => {
@@ -46,7 +46,11 @@ const generateColors = (count: number) => {
   return colors;
 };
 
-const Dashboard = () => {
+interface DashboardProps {
+  mockData: Transaction[];
+}
+
+const Dashboard = ({mockData}: DashboardProps) => {
   const [date, setDate] = useState<undefined | {
     from?: Date;
     to?: Date;
@@ -357,103 +361,6 @@ const Dashboard = () => {
             </PieChart>
           </ResponsiveContainer>
         </div>
-      </div>
-
-      <div>
-        <h2 className="font-bold mb-2">Detalhes das Transações</h2>
-        <Table>
-          <TableCaption>Lista detalhada de todas as transações.</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
-              <TableHead className="text-center">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.map(item => (
-              <TableRow key={item.date + item.description}>
-                <TableCell>{format(parseISO(item.date), 'dd/MM/yyyy', {locale: ptBR})}</TableCell>
-                <TableCell>{item.category}</TableCell>
-                <TableCell>{item.type}</TableCell>
-                <TableCell>{item.description}</TableCell>
-                <TableCell className="text-right">R$ {item.amount.toFixed(2)}</TableCell>
-                <TableCell className="text-center">
-                  <div className="flex justify-center gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <span>Editar</span>
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                          <DialogTitle>Editar Transação</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="date" className="text-right">
-                              Data
-                            </Label>
-                            <Input id="date" defaultValue={item.date} className="col-span-3"/>
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="category" className="text-right">
-                              Categoria
-                            </Label>
-                            <Input id="category" defaultValue={item.category} className="col-span-3"/>
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="type" className="text-right">
-                              Tipo
-                            </Label>
-                            <Input id="type" defaultValue={item.type} className="col-span-3"/>
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="description" className="text-right">
-                              Descrição
-                            </Label>
-                            <Input id="description" defaultValue={item.description} className="col-span-3"/>
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="amount" className="text-right">
-                              Valor
-                            </Label>
-                            <Input id="amount" defaultValue={item.amount} className="col-span-3"/>
-                          </div>
-                        </div>
-                        <Button type="submit">Salvar</Button>
-                      </DialogContent>
-                    </Dialog>
-
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <span>Deletar</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta ação é irreversível. Tem certeza que deseja excluir esta transação?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleDelete}>Confirmar</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
       </div>
     </div>
   );
