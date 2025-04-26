@@ -4,7 +4,7 @@ import Dashboard from '@/components/Dashboard';
 import Navbar from '@/components/Navbar';
 import {useState} from 'react';
 import {Sheet, SheetContent, SheetHeader, SheetTitle} from '@/components/ui/sheet';
-import {Label} from '@/components/ui/label';
+import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
@@ -25,6 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {parseISO} from "date-fns";
+import {Edit, Trash2} from "lucide-react";
 
 export default function Home() {
   const [entriesOpen, setEntriesOpen] = useState(false);
@@ -48,6 +49,10 @@ export default function Home() {
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
 
   const [mockData, setMockData] = useState<Transaction[]>(initialMockData);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
 
   const handleEntrySave = () => {
     setConfirmEntryOpen(true);
@@ -105,6 +110,32 @@ export default function Home() {
 
   const handleCancelExitSave = () => {
     setConfirmExitOpen(false);
+  };
+
+  //Edit/Delete functionality
+  const handleEdit = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setEditModalOpen(true);
+  };
+
+  const handleRemove = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setDeleteConfirmationOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedTransaction) {
+      setMockData(mockData.filter(item =>
+        !(item.date === selectedTransaction.date && item.description === selectedTransaction.description)
+      ));
+      setDeleteConfirmationOpen(false);
+      setSelectedTransaction(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmationOpen(false);
+    setSelectedTransaction(null);
   };
 
   return (
@@ -339,6 +370,23 @@ export default function Home() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/*Delete COnfirmation Modal*/}
+      <AlertDialog open={deleteConfirmationOpen} onOpenChange={setDeleteConfirmationOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Remoção</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover esta transação?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDelete}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/*Transactions table section*/}
       <div className="container mx-auto mt-8">
         <h2 className="text-2xl font-bold mb-4">Transações Salvas</h2>
         <Table>
@@ -350,6 +398,7 @@ export default function Home() {
               <TableHead>Tipo</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="text-center">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -360,6 +409,14 @@ export default function Home() {
                 <TableCell>{item.type}</TableCell>
                 <TableCell>{item.description}</TableCell>
                 <TableCell className="text-right">R$ {item.amount.toFixed(2)}</TableCell>
+                <TableCell className="text-center">
+                  <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
+                    <Edit className="h-4 w-4"/>
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleRemove(item)}>
+                    <Trash2 className="h-4 w-4"/>
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
