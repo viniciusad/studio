@@ -222,7 +222,7 @@ const Dashboard = () => {
             <SelectValue placeholder="Filtrar por categoria"/>
             </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas as Categorias</SelectItem>
+            <SelectItem value={null}>Todas as Categorias</SelectItem>
             {categories.map(category => (
               <SelectItem key={category} value={category}>{category}</SelectItem>
             ))}
@@ -234,7 +234,7 @@ const Dashboard = () => {
             <SelectValue placeholder="Filtrar por tipo"/>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os Tipos</SelectItem>
+            <SelectItem value={null}>Todos os Tipos</SelectItem>
             {types.map(type => (
               <SelectItem key={type} value={type}>{type}</SelectItem>
             ))}
