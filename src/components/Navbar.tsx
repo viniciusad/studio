@@ -7,9 +7,9 @@ const Navbar = () => {
         <Link href="/" className="font-bold text-lg">
           Dashboard
         </Link>
-        <Link href="/entries">Entries</Link>
-        <Link href="/exits">Exits</Link>
-        <Link href="/planning">Planning</Link>
+        <Link href="/entries">Entradas</Link>
+        <Link href="/exits">Saídas</Link>
+        <Link href="/planning">Planejamento</Link>
         <Link href="/extras">Extras</Link>
         <Link href="/cadastros">Cadastros</Link>
       </div>
